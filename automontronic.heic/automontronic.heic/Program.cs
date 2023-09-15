@@ -1,6 +1,7 @@
 using System;
 using ImageMagick;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace automontronic.heic
 {
@@ -11,7 +12,7 @@ namespace automontronic.heic
 			bool retry = true;
 			bool dirProcessing = false;
 			string path;
-			string delete;
+			bool deleteJpgs;
             
             Console.WriteLine("Enter the path (absolute or relative) to a HEIC file to convert to JPG.");
             Console.WriteLine("Alternativelly, enter path to a directory and all HEIC files in it and its subdirectories will be converted.");
@@ -47,33 +48,17 @@ namespace automontronic.heic
             {
                 Console.WriteLine("Keep in mind that this will affect all HEIC files in the selected directory AND ALL SUBDIRECTORIES.");
             }
-			do
-			{
-                Console.Write("> ");
-                Console.ForegroundColor = ConsoleColor.Green;
-                delete = Console.ReadLine().ToLower();
-				Console.ResetColor();
-				if (delete != "y" && delete != "n")
-				{
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.WriteLine("Use 'y' to delete converted HEIC files, 'n' to keep them.");
-					Console.ResetColor();
-				}
-				else
-				{
-					retry = false;
-				}
-			} while (retry);
+            deleteJpgs = YesOrNoInput();
 
-			Console.WriteLine();
+            Console.WriteLine();
 
 			if (dirProcessing)
 			{
-				ProcessDirectory(path, (delete == "y"));
+				ProcessDirectory(path, deleteJpgs);
 			}
 			else
 			{
-				ProcessFile(path, (delete == "y"));
+				ProcessFile(path, deleteJpgs);
 			}
 
             Console.WriteLine("\nDone!\nPress any key to continue...");
@@ -107,7 +92,16 @@ namespace automontronic.heic
             using (MagickImage image = new MagickImage(path))
             {
                 string newFile = path.Replace(Path.GetExtension(path), ".jpg");
-                image.Write(newFile);
+                if (File.Exists(newFile))
+				{
+                    Console.WriteLine("File '{0}' already exists. Overwrite? (y/n)");
+                    bool overwrite = YesOrNoInput();
+                    if (!overwrite)
+                    {
+                        return;
+                    }
+				}
+				image.Write(newFile);
             }
             Console.WriteLine("Processed file '{0}'.", path);
 			if (deleteConverted)
@@ -115,6 +109,36 @@ namespace automontronic.heic
 				File.Delete(path);
 				Console.WriteLine("Deleted file '{0}'.", path);
 			}
+        }
+
+        /// <summary>
+        /// Prompts the user in the console with the classic "type 'y' or 'n'" dialog.
+        /// As long as the user doesn't type one of these letters (or their uppercase variants), the dialogue keeps appearing.
+        /// </summary>
+        /// <returns>True, if the user entered 'y' (or 'Y'), False, if they entered 'n' (or 'N')</returns>
+        public static bool YesOrNoInput()
+        {
+            string result;
+            bool retry = true;
+            do
+            {
+                Console.Write("> ");
+                Console.ForegroundColor = ConsoleColor.Green;
+                result = Console.ReadLine().ToLower();
+                Console.ResetColor();
+                if (result != "y" && result != "n")
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Use 'y' for 'Yes' or 'n' for 'No'.");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    retry = false;
+                }
+            } while (retry);
+
+            return (result == "y");
         }
     }
 }
