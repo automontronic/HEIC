@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ImageMagick;
 using System.IO;
 
@@ -8,29 +8,71 @@ namespace automontronic.heic
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Enter path to convert HEIC files to JPG and press enter:");
-            string path = Console.ReadLine();
-            if (File.Exists(path))
+			bool retry = true;
+			bool dirProcessing;
+			string path;
+			string delete;
+            
+            Console.WriteLine("Enter the path to a HEIC file to convert to JPG.");
+            Console.WriteLine("Alternativelly, enter path to a directory and all HEIC files in it and its subdirectories will be converted.");
+			do
+			{
+				Console.Write("> ");
+                path = Console.ReadLine();
+				if (File.Exists(path))
+				{
+					// This path is a file
+					dirProcessing = false;
+					retry = false;
+				}
+				else if (Directory.Exists(path))
+				{
+					// This path is a directory
+					dirProcessing = true;
+					retry = false;
+				}
+				else
+				{
+					Console.WriteLine("{0} is not a valid file or directory.", path);
+				}
+			} while (retry);
+
+			retry = true;
+			Console.WriteLine("Do you want the HEIC files to be deleted when their conversion is complete? (y/n)");
+            if (dirProcessing)
             {
-                // This path is a file
-                ProcessFile(path);
+                Console.WriteLine("Keep in mind that this will affect all HEIC files in the selected directory AND ALL SUBDIRECTORIES.");
             }
-            else if (Directory.Exists(path))
-            {
-                // This path is a directory
-                ProcessDirectory(path);
-            }
-            else
-            {
-                Console.WriteLine("{0} is not a valid file or directory.", path);
-            }
+			do
+			{
+                Console.Write("> ");
+				delete = Console.ReadLine().ToLower();
+				if (delete != "y" || delete != "n")
+				{
+					Console.WriteLine("Use 'y' to delete converted HEIC files, 'n' to keep them.");
+				}
+				else
+				{
+					retry = false;
+				}
+			} while (retry);
+			
+			if (dirProcessing)
+			{
+				ProcessDirectory(path, (delete == "y"));
+			}
+			else
+			{
+				ProcessFile(path, (delete == "y"));
+			}
 
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
         }
+		
         // Process all files in the directory passed in, recurse on any directories 
         // that are found, and process the files they contain.
-        public static void ProcessDirectory(string targetDirectory)
+        public static void ProcessDirectory(string targetDirectory, bool deleteConverted = false)
         {
             // Process the list of files found in the directory.
             string[] fileEntries = Directory.GetFiles(targetDirectory);
@@ -38,7 +80,7 @@ namespace automontronic.heic
             {
                 if (Path.GetExtension(fileName).ToLower() == ".heic")
                 {
-                    ProcessFile(fileName);
+                    ProcessFile(fileName, deleteConverted);
                 }
             }
 
@@ -50,7 +92,7 @@ namespace automontronic.heic
         }
 
         // Insert logic for processing found files here.
-        public static void ProcessFile(string path)
+        public static void ProcessFile(string path, bool deleteConverted = false)
         {
             using (MagickImage image = new MagickImage(path))
             {
@@ -58,6 +100,11 @@ namespace automontronic.heic
                 image.Write(newFile);
             }
             Console.WriteLine("Processed file '{0}'.", path);
+			if (deleteConverted)
+			{
+				File.Delete(path);
+				Console.WriteLine("Deleted file '{0}'.", path);
+			}
         }
     }
 }
