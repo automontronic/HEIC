@@ -9,17 +9,19 @@ namespace automontronic.heic
         static void Main(string[] args)
         {
 			bool retry = true;
-			bool dirProcessing;
+			bool dirProcessing = false;
 			string path;
 			string delete;
             
-            Console.WriteLine("Enter the path to a HEIC file to convert to JPG.");
+            Console.WriteLine("Enter the path (absolute or relative) to a HEIC file to convert to JPG.");
             Console.WriteLine("Alternativelly, enter path to a directory and all HEIC files in it and its subdirectories will be converted.");
 			do
 			{
 				Console.Write("> ");
+                Console.ForegroundColor = ConsoleColor.Green;
                 path = Console.ReadLine();
-				if (File.Exists(path))
+				Console.ResetColor();
+                if (File.Exists(path))
 				{
 					// This path is a file
 					dirProcessing = false;
@@ -33,12 +35,14 @@ namespace automontronic.heic
 				}
 				else
 				{
-					Console.WriteLine("{0} is not a valid file or directory.", path);
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine("'{0}' is not a valid file or directory.", path);
+					Console.ResetColor();
 				}
 			} while (retry);
 
 			retry = true;
-			Console.WriteLine("Do you want the HEIC files to be deleted when their conversion is complete? (y/n)");
+			Console.WriteLine("\nDo you want the HEIC files to be deleted when their conversion is complete? (y/n)");
             if (dirProcessing)
             {
                 Console.WriteLine("Keep in mind that this will affect all HEIC files in the selected directory AND ALL SUBDIRECTORIES.");
@@ -46,17 +50,23 @@ namespace automontronic.heic
 			do
 			{
                 Console.Write("> ");
-				delete = Console.ReadLine().ToLower();
-				if (delete != "y" || delete != "n")
+                Console.ForegroundColor = ConsoleColor.Green;
+                delete = Console.ReadLine().ToLower();
+				Console.ResetColor();
+				if (delete != "y" && delete != "n")
 				{
+					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine("Use 'y' to delete converted HEIC files, 'n' to keep them.");
+					Console.ResetColor();
 				}
 				else
 				{
 					retry = false;
 				}
 			} while (retry);
-			
+
+			Console.WriteLine();
+
 			if (dirProcessing)
 			{
 				ProcessDirectory(path, (delete == "y"));
@@ -66,8 +76,8 @@ namespace automontronic.heic
 				ProcessFile(path, (delete == "y"));
 			}
 
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
+            Console.WriteLine("\nDone!\nPress any key to continue...");
+            Console.ReadKey(true);
         }
 		
         // Process all files in the directory passed in, recurse on any directories 
@@ -88,7 +98,7 @@ namespace automontronic.heic
             // Recurse into subdirectories of this directory.
             string[] subdirectoryEntries = Directory.GetDirectories(targetDirectory);
             foreach (string subdirectory in subdirectoryEntries)
-                ProcessDirectory(subdirectory);
+                ProcessDirectory(subdirectory, deleteConverted);
         }
 
         // Insert logic for processing found files here.
