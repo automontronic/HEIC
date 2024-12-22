@@ -11,7 +11,7 @@ namespace adastra.heic
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("===== HEIC to PNG Converter =====");
+            Console.WriteLine("===== HEIC to JPG Converter =====");
 
             // Prompt user for source folder
             Console.Write("Enter the path to the folder containing HEIC files: ");
@@ -25,7 +25,7 @@ namespace adastra.heic
             }
 
             // Prompt user for output folder
-            Console.Write("Enter the path to the folder where PNG files will be saved: ");
+            Console.Write("Enter the path to the folder where JPG files will be saved: ");
             string outputFolder = Console.ReadLine();
 
             // Validate output folder or create it
@@ -52,15 +52,15 @@ namespace adastra.heic
                 try
                 {
                     string fileName = Path.GetFileNameWithoutExtension(heicFile);
-                    string outputFilePath = Path.Combine(outputFolder, $"{fileName}.png");
+                    string outputFilePath = Path.Combine(outputFolder, $"{fileName}.jpg");
 
-                    // Convert HEIC to PNG
+                    // Convert HEIC to JPG
                     using (MagickImage image = new MagickImage(heicFile))
                     {
                         image.Write(outputFilePath);
                     }
 
-                    Console.WriteLine($"Converted: {fileName}.heic to {fileName}.png");
+                    Console.WriteLine($"Converted: {fileName}.heic to {fileName}.jpg");
                 }
                 catch (Exception ex)
                 {
