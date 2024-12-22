@@ -1,63 +1,75 @@
 ﻿using System;
 using ImageMagick;
 using System.IO;
-
-namespace automontronic.heic
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.Serialization;
+using System.Text;
+namespace adastra.heic
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Enter path to convert HEIC files to JPG and press enter:");
-            string path = Console.ReadLine();
-            if (File.Exists(path))
+            Console.WriteLine("===== HEIC to PNG Converter =====");
+
+            // Prompt user for source folder
+            Console.Write("Enter the path to the folder containing HEIC files: ");
+            string sourceFolder = Console.ReadLine();
+
+            // Validate source folder
+            if (string.IsNullOrWhiteSpace(sourceFolder) || !Directory.Exists(sourceFolder))
             {
-                // This path is a file
-                ProcessFile(path);
-            }
-            else if (Directory.Exists(path))
-            {
-                // This path is a directory
-                ProcessDirectory(path);
-            }
-            else
-            {
-                Console.WriteLine("{0} is not a valid file or directory.", path);
+                Console.WriteLine("Invalid source folder. Please ensure the path is correct.");
+                return;
             }
 
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
-        }
-        // Process all files in the directory passed in, recurse on any directories 
-        // that are found, and process the files they contain.
-        public static void ProcessDirectory(string targetDirectory)
-        {
-            // Process the list of files found in the directory.
-            string[] fileEntries = Directory.GetFiles(targetDirectory);
-            foreach (string fileName in fileEntries)
+            // Prompt user for output folder
+            Console.Write("Enter the path to the folder where PNG files will be saved: ");
+            string outputFolder = Console.ReadLine();
+
+            // Validate output folder or create it
+            if (string.IsNullOrWhiteSpace(outputFolder))
             {
-                if (Path.GetExtension(fileName).ToLower() == ".heic")
+                Console.WriteLine("Invalid output folder. Please ensure the path is correct.");
+                return;
+            }
+            Directory.CreateDirectory(outputFolder);
+
+            // Get all HEIC files from the source folder
+            string[] heicFiles = Directory.GetFiles(sourceFolder, "*.heic", SearchOption.TopDirectoryOnly);
+
+            if (heicFiles.Length == 0)
+            {
+                Console.WriteLine("No HEIC files found in the source folder.");
+                return;
+            }
+
+            Console.WriteLine($"Found {heicFiles.Length} HEIC file(s). Converting...");
+
+            foreach (string heicFile in heicFiles)
+            {
+                try
                 {
-                    ProcessFile(fileName);
+                    string fileName = Path.GetFileNameWithoutExtension(heicFile);
+                    string outputFilePath = Path.Combine(outputFolder, $"{fileName}.png");
+
+                    // Convert HEIC to PNG
+                    using (MagickImage image = new MagickImage(heicFile))
+                    {
+                        image.Write(outputFilePath);
+                    }
+
+                    Console.WriteLine($"Converted: {fileName}.heic to {fileName}.png");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to convert {heicFile}: {ex.Message}");
                 }
             }
 
-
-            // Recurse into subdirectories of this directory.
-            string[] subdirectoryEntries = Directory.GetDirectories(targetDirectory);
-            foreach (string subdirectory in subdirectoryEntries)
-                ProcessDirectory(subdirectory);
-        }
-
-        // Insert logic for processing found files here.
-        public static void ProcessFile(string path)
-        {
-            using (MagickImage image = new MagickImage(path))
-            {
-                string newFile = path.Replace(Path.GetExtension(path), ".jpg");
-                image.Write(newFile);
-            }
-            Console.WriteLine("Processed file '{0}'.", path);
+            Console.WriteLine("Conversion complete. Press any key to exit.");
+            Console.ReadKey();
         }
     }
 }
